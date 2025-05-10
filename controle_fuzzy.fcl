@@ -1,0 +1,218 @@
+/*
+SISTEMA DE INFERÊNCIA FUZZY (FIS) PARA CONTROLE DE ABERTURA DAS POLIAS DE UMA TRANSMISSÃO CONTINUAMENTE VARIÁVEL
+*/
+
+FUNCTION_BLOCK controlePolia1	// Definição do bloco (pode ter mais de um bloco por arquivo)
+
+VAR_INPUT				// Variáveis de entrada
+	rotacao_motor : REAL;
+	abertura_borboleta : REAL; (*range: 0-180 em kilometros por hora*)
+	frenagem : REAL;	
+	velocidade_veiculo : REAL;
+END_VAR
+
+VAR_OUTPUT				// Variável de saída
+	controlePolia1 : REAL;
+	//RANGE := (0..100);
+END_VAR
+
+FUZZIFY rotacao_motor	// De 0 a 6500 (RPM) - 900 repouso / 6500 máximo		
+	TERM minima := (0, 0) (0, 1) (900, 1) (3000, 0); 
+	TERM media := (900, 0) (4750,1) (6500,0);
+	TERM maxima := (4750, 0)(6000, 1) (6500, 1);
+END_FUZZIFY
+
+FUZZIFY abertura_borboleta	 // Consumo de combustível
+	TERM pequena := (0, 0) (0, 1) (50, 0); 
+	TERM media := (25, 0) (50, 1) (75, 0);
+	TERM alta := (50, 0) (90,1) (100, 1);
+END_FUZZIFY
+
+FUZZIFY frenagem			
+	TERM fraca := (0, 0) (0, 1) (5, 0); 
+	TERM media := (2.5, 0) (5,1) (7.5,0);
+	TERM forte := (5, 0) (7.5, 1) (10,1);
+END_FUZZIFY
+
+FUZZIFY velocidade_veiculo			
+	TERM baixa := (0, 0) (0, 1) (20, 1) (40, 0);  
+	TERM media := (20, 0) (60,1) (80,0);
+	TERM alta := (60, 0) (90, 1) (180,1);
+END_FUZZIFY
+
+
+DEFUZZIFY controlePolia1	
+	TERM reduzir := 0;
+	TERM aumentar := 100;
+	METHOD : COGS  ;		// Usa 'Centro de Gravidade por singletons' para o método de defuzzificação
+	DEFAULT := 0;		// Valor default é 0 (Se não existir regra para ativar a defuzzificação)
+END_DEFUZZIFY
+
+RULEBLOCK No1
+	//Rotação do Motor	
+	RULE 1 : IF rotacao_motor IS minima	THEN controlePolia1 IS reduzir;
+	RULE 2 : IF rotacao_motor IS media	THEN controlePolia1 IS aumentar;
+	RULE 3 : IF rotacao_motor IS maxima	THEN controlePolia1 IS aumentar;
+	
+	//Abertura da Borboleta
+	RULE 4 : IF abertura_borboleta IS pequena THEN controlePolia1 IS reduzir;
+	RULE 5 : IF abertura_borboleta IS media THEN controlePolia1 IS aumentar;
+	RULE 6 : IF abertura_borboleta IS alta THEN controlePolia1 IS aumentar;
+	
+	//Frenagem
+	RULE 7 : IF frenagem IS fraca THEN controlePolia1 IS aumentar;
+	RULE 8 : IF frenagem IS media THEN controlePolia1 IS reduzir;
+	RULE 9 : IF frenagem IS forte THEN controlePolia1 IS reduzir;
+	
+	//Velocidade do Veículo
+	RULE 10 : IF velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 11 : IF velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	RULE 12 : IF velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	//Rotação do motor X Abertura da Borboleta 
+	RULE 13 : IF rotacao_motor IS minima AND abertura_borboleta IS pequena THEN controlePolia1 IS aumentar;
+	RULE 14 : IF rotacao_motor IS minima AND abertura_borboleta IS media THEN controlePolia1 IS aumentar;
+	RULE 15 : IF rotacao_motor IS minima AND abertura_borboleta IS alta THEN controlePolia1 IS aumentar;
+
+	RULE 16 : IF rotacao_motor IS media AND abertura_borboleta IS pequena THEN controlePolia1 IS aumentar;
+	RULE 17 : IF rotacao_motor IS media AND abertura_borboleta IS media THEN controlePolia1 IS aumentar;
+	RULE 18 : IF rotacao_motor IS media AND abertura_borboleta IS alta THEN controlePolia1 IS aumentar;
+	
+	RULE 19 : IF rotacao_motor IS maxima AND abertura_borboleta IS pequena THEN controlePolia1 IS aumentar;
+	RULE 20 : IF rotacao_motor IS maxima AND abertura_borboleta IS media THEN controlePolia1 IS aumentar;
+	RULE 21 : IF rotacao_motor IS maxima AND abertura_borboleta IS alta THEN controlePolia1 IS aumentar;
+	
+	//Rotação do motor X Frenagem 
+	RULE 22 : IF rotacao_motor IS minima AND frenagem IS fraca THEN controlePolia1 IS reduzir;
+	RULE 23 : IF rotacao_motor IS minima AND frenagem IS media THEN controlePolia1 IS reduzir;
+	RULE 24 : IF rotacao_motor IS minima AND frenagem IS forte THEN controlePolia1 IS reduzir;
+	
+	RULE 25 : IF rotacao_motor IS media AND frenagem IS fraca THEN controlePolia1 IS reduzir;
+	RULE 26 : IF rotacao_motor IS media AND frenagem IS media THEN controlePolia1 IS reduzir;
+	RULE 27 : IF rotacao_motor IS media AND frenagem IS forte THEN controlePolia1 IS reduzir;
+	
+	RULE 28 : IF rotacao_motor IS maxima AND frenagem IS fraca THEN controlePolia1 IS reduzir;
+	RULE 29 : IF rotacao_motor IS maxima AND frenagem IS media THEN controlePolia1 IS reduzir;
+	RULE 30 : IF rotacao_motor IS maxima AND frenagem IS forte THEN controlePolia1 IS reduzir;
+	
+	//Rotação do motor X Velocidade Veículo 
+	RULE 31 : IF rotacao_motor IS minima AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 32 : IF rotacao_motor IS minima AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 33 : IF rotacao_motor IS minima AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	RULE 34 : IF rotacao_motor IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	RULE 35 : IF rotacao_motor IS media AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	RULE 36 : IF rotacao_motor IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	RULE 37 : IF rotacao_motor IS maxima AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 38 : IF rotacao_motor IS maxima AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 39 : IF rotacao_motor IS maxima AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+
+	//Abertura da Borboleta X Velocidade do Veículo 
+	RULE 40 : IF abertura_borboleta IS pequena AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 41 : IF abertura_borboleta IS pequena AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 42 : IF abertura_borboleta IS pequena AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	RULE 43 : IF abertura_borboleta IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 44 : IF abertura_borboleta IS media AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 45 : IF abertura_borboleta IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	RULE 46 : IF abertura_borboleta IS alta AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 47 : IF abertura_borboleta IS alta AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 48 : IF abertura_borboleta IS alta AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	//Frenagem X Velocidade do Veículo 
+	RULE 49 : IF frenagem IS fraca AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 50 : IF frenagem IS fraca AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 51 : IF frenagem IS fraca AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	RULE 52 : IF frenagem IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 53 : IF frenagem IS media AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 54 : IF frenagem IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	RULE 55 : IF frenagem IS forte AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 56 : IF frenagem IS forte AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 57 : IF frenagem IS forte AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	//Rotação do Motor X Aceleração X Velocidade do Veículo
+	
+	RULE 58 : IF rotacao_motor IS minima AND abertura_borboleta IS pequena AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 59 : IF rotacao_motor IS minima AND abertura_borboleta IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	RULE 60 : IF rotacao_motor IS minima AND abertura_borboleta IS alta AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	
+	RULE 61 : IF rotacao_motor IS media AND abertura_borboleta IS pequena AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 62 : IF rotacao_motor IS media AND abertura_borboleta IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	RULE 63 : IF rotacao_motor IS media AND abertura_borboleta IS alta AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	
+	RULE 64 : IF rotacao_motor IS maxima AND abertura_borboleta IS pequena AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 65 : IF rotacao_motor IS maxima AND abertura_borboleta IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	RULE 66 : IF rotacao_motor IS maxima AND abertura_borboleta IS alta AND velocidade_veiculo IS baixa THEN controlePolia1 IS aumentar;
+	
+	RULE 67 : IF rotacao_motor IS minima AND abertura_borboleta IS pequena AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 68 : IF rotacao_motor IS minima AND abertura_borboleta IS media AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	RULE 69 : IF rotacao_motor IS minima AND abertura_borboleta IS alta AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	
+	RULE 70 : IF rotacao_motor IS media AND abertura_borboleta IS pequena AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 71 : IF rotacao_motor IS media AND abertura_borboleta IS media AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	RULE 72 : IF rotacao_motor IS media AND abertura_borboleta IS alta AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	
+	RULE 73 : IF rotacao_motor IS maxima AND abertura_borboleta IS pequena AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 74 : IF rotacao_motor IS maxima AND abertura_borboleta IS media AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	RULE 75 : IF rotacao_motor IS maxima AND abertura_borboleta IS alta AND velocidade_veiculo IS media THEN controlePolia1 IS aumentar;
+	
+	RULE 76 : IF rotacao_motor IS minima AND abertura_borboleta IS pequena AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 77 : IF rotacao_motor IS minima AND abertura_borboleta IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	RULE 78 : IF rotacao_motor IS minima AND abertura_borboleta IS alta AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	RULE 79 : IF rotacao_motor IS media AND abertura_borboleta IS pequena AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 80 : IF rotacao_motor IS media AND abertura_borboleta IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	RULE 81 : IF rotacao_motor IS media AND abertura_borboleta IS alta AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	RULE 82 : IF rotacao_motor IS maxima AND abertura_borboleta IS pequena AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 83 : IF rotacao_motor IS maxima AND abertura_borboleta IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	RULE 84 : IF rotacao_motor IS maxima AND abertura_borboleta IS alta AND velocidade_veiculo IS alta THEN controlePolia1 IS aumentar;
+	
+	
+	//Rotação do Motor X Frenagem X Velocidade do Veículo
+	
+	RULE 85 : IF rotacao_motor IS minima AND frenagem IS fraca AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 86 : IF rotacao_motor IS minima AND frenagem IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 87 : IF rotacao_motor IS minima AND frenagem IS forte AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	
+	RULE 88 : IF rotacao_motor IS media AND frenagem IS fraca AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 89 : IF rotacao_motor IS media AND frenagem IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 90 : IF rotacao_motor IS media AND frenagem IS forte AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	
+	RULE 91 : IF rotacao_motor IS maxima AND frenagem IS fraca AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 92 : IF rotacao_motor IS maxima AND frenagem IS media AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	RULE 93 : IF rotacao_motor IS maxima AND frenagem IS forte AND velocidade_veiculo IS baixa THEN controlePolia1 IS reduzir;
+	
+	RULE 94 : IF rotacao_motor IS minima AND frenagem IS fraca AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 95 : IF rotacao_motor IS minima AND frenagem IS media AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 96 : IF rotacao_motor IS minima AND frenagem IS forte AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	
+	RULE 97 : IF rotacao_motor IS media AND frenagem IS fraca AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 98 : IF rotacao_motor IS media AND frenagem IS media AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 99 : IF rotacao_motor IS media AND frenagem IS forte AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	
+	RULE 100 : IF rotacao_motor IS maxima AND frenagem IS fraca AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 101 : IF rotacao_motor IS maxima AND frenagem IS media AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	RULE 102 : IF rotacao_motor IS maxima AND frenagem IS forte AND velocidade_veiculo IS media THEN controlePolia1 IS reduzir;
+	
+	RULE 103 : IF rotacao_motor IS minima AND frenagem IS fraca AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 104 : IF rotacao_motor IS minima AND frenagem IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 105 : IF rotacao_motor IS minima AND frenagem IS forte AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	RULE 106 : IF rotacao_motor IS media AND frenagem IS fraca AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 107 : IF rotacao_motor IS media AND frenagem IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 108 : IF rotacao_motor IS media AND frenagem IS forte AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	
+	RULE 109 : IF rotacao_motor IS maxima AND frenagem IS fraca AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 110 : IF rotacao_motor IS maxima AND frenagem IS media AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+	RULE 111 : IF rotacao_motor IS maxima AND frenagem IS forte AND velocidade_veiculo IS alta THEN controlePolia1 IS reduzir;
+
+	
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
+
