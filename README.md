@@ -1,6 +1,6 @@
 # Controlador de uma Transmissão Continuamente Variável (CVT) com Lógica Fuzzy
 
-Este projeto implementa um controlador de uma Transmissão Continuamente Variável (CVT) utilizando Lógica Fuzzy com a biblioteca [JFuzzyLogic](http://jfuzzylogic.sourceforge.net/html/index.html). A lógica fuzzy é usada para simular a tomada de decisão humana na mudança da razão de transmissão, com base em variáveis como rotação do motor e carga do veículo.
+Este projeto implementa um controlador de uma Transmissão Continuamente Variável (CVT) utilizando Lógica Fuzzy com a biblioteca [JFuzzyLogic](http://jfuzzylogic.sourceforge.net/html/index.html). A lógica fuzzy é usada para simular a tomada de decisão humana na mudança da razão de transmissão, com base em variáveis como aceleração do veículo dentre outras.
 
 ## 📌 Objetivos
 
